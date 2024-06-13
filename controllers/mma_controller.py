@@ -1,4 +1,6 @@
 import numpy as np
+from models.manipulator_model import ManiuplatorModel
+from controllers.feedback_linearization_controller import FeedbackLinearizationController
 from .controller import Controller
 
 
@@ -6,21 +8,29 @@ class MMAController(Controller):
     def __init__(self, Tp):
         # TODO: Fill the list self.models with 3 models of 2DOF manipulators with different m3 and r3
         # I:   m3=0.1,  r3=0.05
+        firstModel = FeedbackLinearizationController(Tp, m3=0.1, r3=0.05)
         # II:  m3=0.01, r3=0.01
+        secondModel = FeedbackLinearizationController(Tp, m3=0.01, r3=0.01)
         # III: m3=1.0,  r3=0.3
-        self.models = [None, None, None]
+        thirdModel = FeedbackLinearizationController(Tp, m3=1.0, r3=0.3)
+        self.models = [firstModel, secondModel, thirdModel]
         self.i = 0
+        self.Tp = Tp
+        self.prev_x = np.zeros(4)
+        self.prev_u = np.zeros(2)
 
     def choose_model(self, x):
         # TODO: Implement procedure of choosing the best fitting model from self.models (by setting self.i)
-        pass
+        # Euler forward estimation
+        x_dot = [reg.model.x_dot(self.prev_x, self.prev_u)
+                 * self.Tp + self.prev_x for reg in self.models]
+        error = [np.linalg.norm(x_hat - x) for x_hat in x_dot]
+        print("SELECT {}".format(self.i))
+        self.i = error.index(min(error))
 
     def calculate_control(self, x, q_r, q_r_dot, q_r_ddot):
-        self.choose_model(x)
-        q = x[:2]
-        q_dot = x[2:]
-        v = q_r_ddot # TODO: add feedback
-        M = self.models[self.i].M(x)
-        C = self.models[self.i].C(x)
-        u = M @ v[:, np.newaxis] + C @ q_dot[:, np.newaxis]
+        self.choose_model(x[:, np.newaxis])
+        u = self.models[self.i].calculate_control(x, q_r, q_r_dot, q_r_ddot)
+        self.prev_x = x
+        self.prev_u = u
         return u
