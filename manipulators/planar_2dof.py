@@ -18,7 +18,7 @@ class PlanarManipulator2DOF:
         self.m2 = 1.
         self.I_1 = 1 / 12 * self.m1 * (3 * self.r1 ** 2 + self.l1 ** 2)
         self.I_2 = 1 / 12 * self.m2 * (3 * self.r2 ** 2 + self.l2 ** 2)
-        self.m3 = 0.0
+        self.m3 = 0.8
         self.r3 = 0.01
         self.I_3 = 2. / 5 * self.m3 * self.r3 ** 2
 
@@ -43,6 +43,8 @@ class PlanarManipulator2DOF:
         ani = FuncAnimation(fig, update, frames=range(x.shape[0]),
                             init_func=init, blit=True, interval=int(self.Tp * 1000), repeat=False)
         plt.show()
+
+
 
     """
     Don't read the content below unless you finished the first two classes.
